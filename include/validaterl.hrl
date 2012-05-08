@@ -2,7 +2,7 @@
 
 -record(numericality, 
         {
-          '$module' = ?DEFAULT_VALIDATE,
+          '$validator' = ?DEFAULT_VALIDATE,
           allow_undefined = false :: boolean(),
           allow_null = false :: boolean(),
           allow_string = false :: boolean(),
@@ -14,7 +14,7 @@
 
 -record(range,
         {
-          '$module' = ?DEFAULT_VALIDATE,
+          '$validator' = ?DEFAULT_VALIDATE,
           from :: undefined | any(),
           to :: undefined | any(),
           exclusive = false :: boolean()
@@ -22,7 +22,7 @@
 
 -record(format,
         {
-          '$module' = ?DEFAULT_VALIDATE,
+          '$validator' = ?DEFAULT_VALIDATE,
           allow_undefined = false :: boolean(),
           allow_null = false :: boolean(),
           allow_empty = false :: boolean(),
