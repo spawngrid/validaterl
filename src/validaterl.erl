@@ -7,7 +7,7 @@
 -endif.
 -define(FAILED(X), X).
 
--type spec() :: #numericality{} | #range{}.
+-type spec() :: #numericality{} | #range{} | #format{}.
 -type name() :: any().
 -type report() :: any().
 -type plan() :: {name(), any(), spec()}.
@@ -143,6 +143,42 @@ validate(V, #range{ from = _From,
     ?FAILED(greater);
 validate(_, #range{}) ->
     true;
+
+validate(undefined, #format{
+           allow_undefined = false
+          }) ->
+    ?FAILED(undefined_not_allowed);
+validate(undefined, #format{
+           allow_undefined = true,
+           default = Default
+          } = V) ->
+    validate(Default, V);
+validate(null, #format{
+           allow_null = false
+          }) ->
+    ?FAILED(null_not_allowed);
+validate(null, #format{
+           allow_null = true,
+           default = Default
+          } = V) ->
+    validate(Default, V);
+validate(Empty, #format{
+           allow_empty = false
+           }) when Empty == [] orelse Empty == <<>> ->
+    ?FAILED(empty_not_allowed);
+validate(Str, #format{
+           re = Re
+          }) when is_list(Str) orelse is_binary(Str) ->
+    case re:run(Str, Re) of
+        nomatch ->
+            ?FAILED(no_match);
+        {match, _} ->
+            true;
+        {error, Error} ->
+            ?FAILED(Error)
+    end;
+validate(_, #format{}) ->
+    ?FAILED(string_expected);
 
 validate(_, _) ->
     ?FAILED(validator_missing).
@@ -314,6 +350,44 @@ range_test_exclusive_prop() ->
                         false
                 end
             end).                                 
-                                 
+
+format_test_() ->
+    [fun format_test_undefined/0,
+     fun format_test_null/0,
+     fun format_test_empty/0,
+     fun format_test_string/0,
+     fun format_test_default/0
+    ].
+
+format_test_undefined() ->
+    ?assertEqual(?FAILED(undefined_not_allowed), validate(undefined, #format{})),
+    ?assertEqual(?FAILED(undefined_not_allowed), validate(undefined, #format{ allow_undefined = false })),
+    ?assert(validate(undefined, #format{ allow_undefined = true, allow_empty = true })).
+
+format_test_null() ->
+    ?assertEqual(?FAILED(null_not_allowed), validate(null, #format{})),
+    ?assertEqual(?FAILED(null_not_allowed), validate(null, #format{ allow_null = false })),
+    ?assert(validate(null, #format{ allow_null = true, allow_empty = true })).
+
+format_test_empty() ->
+    ?assertEqual(true, validate("", #format{ allow_empty = true })),
+    ?assertEqual(true, validate(<<>>, #format{ allow_empty = true })),
+    ?assertEqual(?FAILED(empty_not_allowed), validate("", #format{ allow_empty = false })),
+    ?assertEqual(?FAILED(empty_not_allowed), validate(<<>>, #format{ allow_empty = false })),
+    ?assertEqual(?FAILED(empty_not_allowed), validate("", #format{})),
+    ?assertEqual(?FAILED(empty_not_allowed), validate(<<>>, #format{})).
+    
+format_test_string() ->
+    ?assertEqual(true, validate("1", #format{ re = "^1$" })),
+    ?assertEqual(?FAILED(no_match), validate("2", #format{ re = "^1$" })).
+
+format_test_default() ->
+    ?assertEqual(true, validate(undefined, #format{ allow_undefined = true, allow_empty = true })),
+    ?assertEqual(true, validate(null, #format{ allow_null = true, allow_empty = true })),
+    ?assertEqual(true, validate("", #format{ allow_empty = true })),
+    ?assertEqual(true, validate(<<>>, #format{allow_empty = true })),
+
+    ?assertEqual(?FAILED(string_expected), validate(undefined, #format{ allow_undefined = true, default = x })),
+    ?assertEqual(?FAILED(string_expected), validate(null, #format{ allow_null = true, default = x })).
 
 -endif.

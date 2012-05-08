@@ -15,3 +15,12 @@
           to :: undefined | any(),
           exclusive = false :: boolean()
         }).
+
+-record(format,
+        {
+          allow_undefined = false :: boolean(),
+          allow_null = false :: boolean(),
+          allow_empty = false :: boolean(),
+          re = ".*" :: string(),
+          default = "" :: string()
+        }).
