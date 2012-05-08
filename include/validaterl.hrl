@@ -29,3 +29,9 @@
           re = ".*" :: string(),
           default = "" :: string()
         }).
+
+-record(length,
+        {
+          '$validator' = ?DEFAULT_VALIDATE,
+          is :: any()
+        }).

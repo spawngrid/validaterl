@@ -180,6 +180,12 @@ validate(Str, #format{
 validate(_, #format{}) ->
     ?FAILED(string_expected);
 
+validate(L, #length{ is = Validator }) when is_list(L) ->
+    validate(length(L), Validator);
+
+validate(L, #length{ is = Validator }) when is_binary(L) orelse is_tuple(L) ->
+    validate(size(L), Validator);
+
 validate(A, A) -> %% equality validator
     true;
 
@@ -190,8 +196,11 @@ validate(V, T) when is_tuple(T) andalso size(T) > 1 ->
     (element(2, T))(V, T);
                    
 
-validate(_, _) ->
-    ?FAILED(mismatch).
+validate(A, B) when A < B ->
+    ?FAILED(lesser);
+validate(A,B) when A > B ->
+    ?FAILED(greater).
+
 
 
 to_string(S) when is_list(S) ->
@@ -409,6 +418,23 @@ custom_validator_test() ->
 
 equality_test() ->
     ?assert(validate(1,1)),
-    ?assertEqual(?FAILED(mismatch), validate(1,2)).
+    ?assertEqual(?FAILED(lesser), validate(1,2)).
+
+comparison_test() ->
+    ?assertEqual(?FAILED(lesser), validate(1, 2)),
+    ?assertEqual(?FAILED(greater), validate(2, 1)).
+
+length_test() ->
+    Tests = [{"a", [{1, true},{2, lesser}, {0, greater}, {#range{ from = 0, to = 2 }, true}]},
+             {<<"a">>, [{1, true},{2, lesser}, {0, greater}, {#range{ from = 0, to = 2}, true}]},
+             {{a}, [{1, true},{2, lesser}, {0, greater}], {#range{ from = 0, to = 2}, true}}],
+    
+    [ 
+      begin
+          ?assertEqual(?FAILED(Outcome), validate(Data, #length{ is = Is }))
+      end || {Data, Cases} <- Tests,
+             {Is, Outcome} <- Cases ].
+              
+    
 
 -endif.
