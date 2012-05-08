@@ -11,7 +11,7 @@
 -type name() :: any().
 -type report() :: any().
 -type plan() :: {name(), any(), spec()}.
--type error() :: {name(), report()}.
+-type error() :: {name(), spec(), report()}.
 
 -spec validate(plan()) -> true | list(error()).
 validate(Plan) ->
