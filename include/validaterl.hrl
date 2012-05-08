@@ -1,6 +1,8 @@
+-define(DEFAULT_VALIDATE, fun validaterl:validate/2).
+
 -record(numericality, 
         {
-          '$module' = validaterl,
+          '$module' = ?DEFAULT_VALIDATE,
           allow_undefined = false :: boolean(),
           allow_null = false :: boolean(),
           allow_string = false :: boolean(),
@@ -12,7 +14,7 @@
 
 -record(range,
         {
-          '$module' = validaterl,
+          '$module' = ?DEFAULT_VALIDATE,
           from :: undefined | any(),
           to :: undefined | any(),
           exclusive = false :: boolean()
@@ -20,7 +22,7 @@
 
 -record(format,
         {
-          '$module' = validaterl,
+          '$module' = ?DEFAULT_VALIDATE,
           allow_undefined = false :: boolean(),
           allow_null = false :: boolean(),
           allow_empty = false :: boolean(),
