@@ -186,7 +186,7 @@ validate(L, #length{ is = Validator }) when is_list(L) ->
 validate(L, #length{ is = Validator }) when is_binary(L) orelse is_tuple(L) ->
     validate(size(L), Validator);
 
-validate(L, #length{ is = Validator }) ->
+validate(_, #length{ is = Validator }) ->
     validate(0, Validator);
 
 validate(A, #type{ is = number }) when is_number(A) ->
@@ -209,7 +209,7 @@ validate(A, #type{ is = tuple }) when is_tuple(A) ->
     true;
 validate(A, #type{ is = list }) when is_list(A) ->
     true;
-validate(A, #type{}) ->
+validate(_, #type{}) ->
     false;
 
 validate(A, A) -> %% equality validator
