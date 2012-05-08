@@ -1,0 +1,11 @@
+{application, validaterl,
+ [
+  {description, "Validators"},
+  {vsn, git},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {env, []}
+ ]}.
