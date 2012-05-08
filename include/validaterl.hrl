@@ -1,5 +1,6 @@
 -record(numericality, 
         {
+          '$module' = validaterl,
           allow_undefined = false :: boolean(),
           allow_null = false :: boolean(),
           allow_string = false :: boolean(),
@@ -11,6 +12,7 @@
 
 -record(range,
         {
+          '$module' = validaterl,
           from :: undefined | any(),
           to :: undefined | any(),
           exclusive = false :: boolean()
@@ -18,6 +20,7 @@
 
 -record(format,
         {
+          '$module' = validaterl,
           allow_undefined = false :: boolean(),
           allow_null = false :: boolean(),
           allow_empty = false :: boolean(),
