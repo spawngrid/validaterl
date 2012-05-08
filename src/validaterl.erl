@@ -180,6 +180,9 @@ validate(Str, #format{
 validate(_, #format{}) ->
     ?FAILED(string_expected);
 
+validate(A, A) -> %% equality validator
+    true;
+
 %% custom validators, the convention is that the first
 %% record element (2nd tuple element) has to be a reference
 %% to a validation fun
@@ -188,7 +191,7 @@ validate(V, T) when is_tuple(T) andalso size(T) > 1 ->
                    
 
 validate(_, _) ->
-    ?FAILED(validator_missing).
+    ?FAILED(mismatch).
 
 
 to_string(S) when is_list(S) ->
@@ -403,5 +406,9 @@ custom_validator_test() ->
                         true
                 end,
     ?assert(validate(x,{my_validator, Validator})).
+
+equality_test() ->
+    ?assert(validate(1,1)),
+    ?assertEqual(?FAILED(mismatch), validate(1,2)).
 
 -endif.
