@@ -186,6 +186,9 @@ validate(L, #length{ is = Validator }) when is_list(L) ->
 validate(L, #length{ is = Validator }) when is_binary(L) orelse is_tuple(L) ->
     validate(size(L), Validator);
 
+validate(L, #length{ is = Validator }) ->
+    validate(0, Validator);
+
 validate(A, A) -> %% equality validator
     true;
 
@@ -425,6 +428,7 @@ comparison_test() ->
     ?assertEqual(?FAILED(greater), validate(2, 1)).
 
 length_test() ->
+    ?assert(validate(atom, #length{ is = 0})),
     Tests = [{"a", [{1, true},{2, lesser}, {0, greater}, {#range{ from = 0, to = 2 }, true}]},
              {<<"a">>, [{1, true},{2, lesser}, {0, greater}, {#range{ from = 0, to = 2}, true}]},
              {{a}, [{1, true},{2, lesser}, {0, greater}], {#range{ from = 0, to = 2}, true}}],
