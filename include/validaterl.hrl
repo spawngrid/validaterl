@@ -35,3 +35,9 @@
           '$validator' = ?DEFAULT_VALIDATE,
           is :: any()
         }).
+
+-record(type,
+        {
+          '$validator' = ?DEFAULT_VALIDATE,
+          is :: any()
+        }).

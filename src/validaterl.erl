@@ -189,6 +189,29 @@ validate(L, #length{ is = Validator }) when is_binary(L) orelse is_tuple(L) ->
 validate(L, #length{ is = Validator }) ->
     validate(0, Validator);
 
+validate(A, #type{ is = number }) when is_number(A) ->
+    true;
+validate(A, #type{ is = boolean }) when A == true orelse A == false ->
+    true;
+validate(A, #type{ is = atom }) when is_atom(A) ->
+    true;
+validate(A, #type{ is = binary }) when is_binary(A) ->
+    true;
+validate(A, #type{ is = reference }) when is_reference(A) ->
+    true;
+validate(A, #type{ is = function }) when is_function(A) ->
+    true;
+validate(A, #type{ is = port }) when is_port(A) ->
+    true;
+validate(A, #type{ is = pid }) when is_pid(A) ->
+    true;
+validate(A, #type{ is = tuple }) when is_tuple(A) ->
+    true;
+validate(A, #type{ is = list }) when is_list(A) ->
+    true;
+validate(A, #type{}) ->
+    false;
+
 validate(A, A) -> %% equality validator
     true;
 
@@ -438,7 +461,22 @@ length_test() ->
           ?assertEqual(?FAILED(Outcome), validate(Data, #length{ is = Is }))
       end || {Data, Cases} <- Tests,
              {Is, Outcome} <- Cases ].
-              
+       
+type_test() ->       
+    ?assert(validate(1, #type{ is = number })),
+    ?assert(validate(1.1, #type{ is = number })),
+    ?assert(validate(atom, #type{ is = atom })),
+    ?assert(validate(<<>>, #type{ is = binary })),
+    ?assert(validate(make_ref(), #type{ is = reference })),
+    ?assert(validate(fun type_test/0, #type{ is = function })),
+    ?assert(validate(hd(erlang:ports()), #type{ is = port })),
+    ?assert(validate(self(), #type{ is = pid })),
+    ?assert(validate({}, #type{ is = tuple })),
+    ?assert(validate([], #type{ is = list })),
+    ?assert(validate(true, #type{ is = boolean })),
+    ?assert(validate(false, #type{ is = boolean })).
+    
+    
     
 
 -endif.
