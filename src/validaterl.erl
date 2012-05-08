@@ -180,6 +180,13 @@ validate(Str, #format{
 validate(_, #format{}) ->
     ?FAILED(string_expected);
 
+%% custom validators, the convention is that the first
+%% record element (2nd tuple element) has to be a reference
+%% to a validation fun
+validate(V, T) when is_tuple(T) andalso size(T) > 1 ->
+    (element(2, T))(V, T);
+                   
+
 validate(_, _) ->
     ?FAILED(validator_missing).
 
@@ -389,5 +396,12 @@ format_test_default() ->
 
     ?assertEqual(?FAILED(string_expected), validate(undefined, #format{ allow_undefined = true, default = x })),
     ?assertEqual(?FAILED(string_expected), validate(null, #format{ allow_null = true, default = x })).
+
+
+custom_validator_test() ->
+    Validator = fun(_, _) ->
+                        true
+                end,
+    ?assert(validate(x,{my_validator, Validator})).
 
 -endif.
