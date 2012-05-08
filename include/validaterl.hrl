@@ -8,3 +8,10 @@
           allow_float = true :: boolean(),
           default = 0 :: number()
         }).
+
+-record(range,
+        {
+          from :: undefined | any(),
+          to :: undefined | any(),
+          exclusive = false :: boolean()
+        }).

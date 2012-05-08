@@ -1,8 +1,10 @@
 -module(validaterl).
 -export([validate/2]).
 -include_lib("validaterl/include/validaterl.hrl").
+-ifdef(TEST).
+-include_lib("proper/include/proper.hrl").
 -include_lib("eunit/include/eunit.hrl").
-
+-endif.
 -define(FAILED(X), X).
 
 %% numericality
@@ -67,13 +69,64 @@ validate(S, #numericality{
                     end
             end
     end;
-    
-validate(V, #numericality{ allow_float = false }) when is_float(V) ->
+    validate(V, #numericality{ allow_float = false }) when is_float(V) ->
     ?FAILED(float_not_allowed);
 validate(V, #numericality{}) when is_integer(V) orelse is_float(V) ->
     true;
 validate(_, #numericality{}) ->
     ?FAILED(number_expected);
+
+validate(_, #range{ from = undefined,
+                    to = undefined }) ->
+    true;
+validate(V, #range{ from = From,
+                    to = undefined,
+                    exclusive = false}) when From /= undefined andalso
+                                             V < From ->
+    ?FAILED(lesser);
+validate(V, #range{ from = From,
+                    to = undefined,
+                    exclusive = true}) when From /= undefined andalso 
+                                            V =< From ->
+    ?FAILED(lesser);
+validate(V, #range{ from = undefined,
+                    to = To,
+                    exclusive = false}) when To /= undefined andalso
+                                             V > To ->
+    ?FAILED(greater);
+validate(V, #range{ from = undefined,
+                    to = To,
+                    exclusive = true}) when To /= undefined andalso
+                                            V >= To ->
+    ?FAILED(greater);
+validate(V, #range{ from = _From,
+                    to = To,
+                    exclusive = false}) when To /= undefined andalso
+                                             V > To ->
+    ?FAILED(greater);
+validate(V, #range{ from = From,
+                    to = _To,
+                    exclusive = false}) when From /= undefined andalso
+                                             V < From ->
+    ?FAILED(lesser);
+validate(V, #range{ from = From,
+                    to = _To,
+                    exclusive = true}) when From /= undefined andalso
+                                             V =< From ->
+    ?FAILED(lesser);
+validate(V, #range{ from = _From,
+                    to = To,
+                    exclusive = false}) when To /= undefined andalso 
+                                             V > To ->
+    ?FAILED(greater);
+validate(V, #range{ from = _From,
+                    to = To,
+                    exclusive = true}) when To /= undefined andalso
+                                            V >= To ->
+    ?FAILED(greater);
+validate(_, #range{}) ->
+    true;
+
 validate(_, _) ->
     ?FAILED(validator_missing).
 
@@ -85,6 +138,7 @@ to_string(S) when is_binary(S) ->
 
 
 -ifdef(TEST).
+
 numericality_test_() ->
     [fun numericality_test_undefined/0,
      fun numericality_test_null/0,
@@ -146,6 +200,103 @@ numericality_test_default() ->
     ?assertEqual(?FAILED(number_expected), validate("", #numericality{ allow_string = true, allow_empty = true, default = x })),
     ?assertEqual(?FAILED(number_expected), validate(<<>>, #numericality{ allow_string = true, allow_empty = true, default = x })).
 
+qc(T) ->
+    ?assertEqual(true, proper:quickcheck(T,
+                                         [
+                                          {numtests, 1000},
+                                          {on_output, fun(String, Format) ->
+                                                              io:format(user, String, Format)
+                                                      end}])).
+                                                                  
+                                                                  
+range_test_() ->
+    [{"include",
+      fun() -> qc(range_test_inclusive_prop()) end},
+     {"exclude",
+      fun() -> qc(range_test_exclusive_prop()) end}].
 
+
+range() ->
+    ?SUCHTHAT({from, F, to, T},
+              {from, oneof([undefined, integer()]), 
+               to, oneof([undefined, integer()])},
+              if F == undefined ->
+                      true;
+                 T == undefined ->
+                      true;
+                 true ->
+                      F =< T
+              end).
+
+range_test_inclusive_prop() ->
+    ?FORALL({{from, From, to, To}, Random}, {range(),
+                                             integer()},
+            begin
+                Validate = validate(Random, #range{ from = From,
+                                                    to = To }),
+                if  From /= undefined andalso Random < From ->
+                        Validate == ?FAILED(lesser);
+                    To /= undefined andalso Random > To ->
+                        Validate == ?FAILED(greater);
+                    From /= undefined andalso To /= undefined 
+                    andalso Random >= From andalso Random =< To ->
+                        Validate == true;
+                    From == undefined andalso To /= undefined 
+                    andalso Random =< To ->
+                        Validate == true;
+                    To == undefined andalso From /= undefined 
+                    andalso Random >= From ->
+                        Validate == true;
+                    From == undefined andalso To == undefined ->
+                        Validate == true;
+                    Random < From ->
+                        Validate == ?FAILED(lesser);
+                    Random > To ->
+                        Validate == ?FAILED(greater);
+                    true ->
+                        false
+                end
+            end).
+
+range_test_exclusive_prop() ->
+    ?FORALL({{from, From, to, To}, Random}, {range(),
+                                             integer()},
+            begin
+                Validate = validate(Random, #range{ from = From,
+                                                    to = To,
+                                                    exclusive = true}),
+                if 
+                    From /= undefined andalso Random =< From
+                    andalso From == To ->
+                        (Validate == ?FAILED(lesser)) orelse
+                        (Validate == ?FAILED(greater));
+                    From /= undefined andalso Random =< From ->
+                        Validate == ?FAILED(lesser);
+                    To /= undefined andalso Random >= To
+                    andalso From == To ->
+                        (Validate == ?FAILED(lesser)) orelse
+                        (Validate == ?FAILED(greater));
+                    To /= undefined andalso Random >= To ->
+                        Validate == ?FAILED(greater);
+                    From /= undefined andalso To /= undefined 
+                    andalso Random > From andalso Random < To ->
+                        Validate == true;
+                    From == undefined andalso To /= undefined 
+                    andalso Random < To ->
+                        Validate == true;
+                    To == undefined andalso From /= undefined 
+                    andalso Random > From ->
+                        Validate == true;
+                    From == undefined andalso To == undefined ->
+                        Validate == true;
+                    Random =< From ->
+                        Validate == ?FAILED(lesser);
+                    Random >= To ->
+                        Validate == ?FAILED(greater);
+                    true ->
+                        false
+                end
+            end).                                 
+                                 
 
 -endif.
