@@ -1,11 +1,28 @@
 -module(validaterl).
--export([validate/2]).
+-export([validate/1, validate/2]).
 -include_lib("validaterl/include/validaterl.hrl").
 -ifdef(TEST).
 -include_lib("proper/include/proper.hrl").
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 -define(FAILED(X), X).
+
+-type spec() :: #numericality{} | #range{}.
+-type name() :: any().
+-type report() :: any().
+-type plan() :: {name(), any(), spec()}.
+-type error() :: {name(), report()}.
+
+-spec validate(plan()) -> true | list(error()).
+validate(Plan) ->
+    lists:filter(fun({_, _, true}) ->
+                         false;
+                    (_) ->
+                         true
+                 end,
+                 [ {Name, Spec, validate(Value, Spec)} ||
+                     {Name, Value, Spec} <- Plan ]).
+    
 
 %% numericality
 validate(undefined, #numericality{
