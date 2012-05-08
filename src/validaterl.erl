@@ -11,16 +11,16 @@
 -type name() :: any().
 -type report() :: any().
 -type plan() :: {name(), any(), spec()}.
--type error() :: {name(), spec(), report()}.
+-type error() :: {name(), any(), spec(), report()}.
 
 -spec validate(plan()) -> true | list(error()).
 validate(Plan) ->
-    lists:filter(fun({_, _, true}) ->
+    lists:filter(fun({_, _, _, true}) ->
                          false;
                     (_) ->
                          true
                  end,
-                 [ {Name, Spec, validate(Value, Spec)} ||
+                 [ {Name, Value, Spec, validate(Value, Spec)} ||
                      {Name, Value, Spec} <- Plan ]).
     
 
