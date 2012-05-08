@@ -192,7 +192,7 @@ validate(A, A) -> %% equality validator
 %% custom validators, the convention is that the first
 %% record element (2nd tuple element) has to be a reference
 %% to a validation fun
-validate(V, T) when is_tuple(T) andalso size(T) > 1 ->
+validate(V, T) when is_tuple(T) andalso size(T) > 1 andalso is_function(element(2, T)) ->
     (element(2, T))(V, T);
                    
 
